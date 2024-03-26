@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Update</title>
+</head>
+<body>
+    <h2>Profile Update</h2>
+    <form action="/profile/update" method="post">
+        <label for="name">Name:</label>
+        <input type="text" value="{{users.name}}" id="name" name="name" required>
+        <br>
+        <label for="dob">Date of Birth:</label>
+        <input type="date" value="{{users.dob}}" id="dob" name="dob" >
+        <br>
+        <label for="time_of_birth">Time of Birth:</label>
+        <input type="time" value="{{users.time_of_birth}}" id="time_of_birth" name="time_of_birth" >
+        <br>
+        <label for="location_of_birth">Location of Birth:</label>
+        <input type="text" value="{{users.location_of_birth}}" id="location_of_birth" name="location_of_birth" >
+        <br>
+        <label for="email">Email ID:</label>
+        <input type="email" value="{{users.email}}" id="email" name="email" >
+        <br>
+        <label for="phone_number">Phone Number:</label>
+        <input type="tel" value="{{users.phone_number}}" id="phone_number" name="phone_number" >
+        <br>
+        <label for="marital_status">Marital Status:</label>
+        <input type="text" id="marital_status" value="{{users.marital_status}}" name="marital_status" >
+        <br>
+        <button type="submit">Update Profile</button>
+    </form>
+</body>
+</html>
