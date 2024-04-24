@@ -29,6 +29,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 300 # 1 min expiry time
 # Initialize Flask-Session
 Session(app)
 
+# function for validating email
 def validate_email(email):
     """
     Validate the format of an email address using a regular expression.
