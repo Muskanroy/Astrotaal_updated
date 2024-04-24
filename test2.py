@@ -1,6 +1,8 @@
 from flask import Flask, request,render_template, redirect,session,flash,jsonify,json
 from flask_sqlalchemy import SQLAlchemy
+from flask_session import Session
 from datetime import datetime
+import redis
 import bcrypt
 import re
 
@@ -16,6 +18,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_passwor
 db = SQLAlchemy(app)
 app.secret_key = 'secret_key_astrotaal'
 
+# Configure Redis for Flask-Session
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = redis.from_url('redis://localhost:6379')
+
+
+# Set session expiry time (in seconds)
+app.config['PERMANENT_SESSION_LIFETIME'] = 300 # 1 min expiry time
+
+# Initialize Flask-Session
+Session(app)
+
+# function for validating email
 def validate_email(email):
     """
     Validate the format of an email address using a regular expression.
@@ -47,10 +61,38 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
+@app.route('/check_redis')
+def check_redis():
+    try:
+        # Attempt to connect to Redis
+        redis_client = redis.StrictRedis(host='localhost', port=6379)
+        redis_client.ping()
+        return jsonify({'status': 'success', 'message': 'Redis is running and accessible.'}), 200
+    except redis.ConnectionError:
+        return jsonify({'status': 'error', 'message': 'Could not connect to Redis. Make sure it is running.'}), 500
+
+# Check if session data has expired
+def is_session_expired(session_key):
+    redis_client = redis.StrictRedis(host='localhost', port=6379)
+    # Check the TTL (time to live) of the session key
+    ttl = redis_client.ttl(session_key)
+    if ttl == -2:
+        return True  # Session data does not exist or has expired
+    elif ttl == -1:
+        return False  # Session data exists and has no expiration
+    else:
+        return False  # Session data exists and has not expired yet
+
+
 
 @app.route('/')
 def index():
-    return 'hello'
+    session_key = 'session:' + session.sid
+    if is_session_expired(session_key):
+        return 'Session has expired'
+    else:
+        return 'Session is still active'
+    
 @app.route('/register',methods=['GET','POST'])
 def register():
     if request.method == 'POST':
@@ -117,7 +159,7 @@ def profile():
         if name =="" or dob=="" or email=="" or time_of_birth=="" or location_of_birth=="" or phone_number=="" or marital_status=="":
             return jsonify({'message': 'Please fill all the fields'}), 400
         else:
-            session['email']=email
+            # 2session['email']=email
             if validate_email(email):
                 try:
                     datetime.strptime(dob, '%Y-%m-%d')
