@@ -5,6 +5,12 @@ from datetime import datetime
 import redis
 import bcrypt
 import re
+import gradio as gr
+import PIL.Image
+import base64
+import time
+import os
+import google.generativeai as genai
 
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -82,6 +88,79 @@ def is_session_expired(session_key):
         return False  # Session data exists and has no expiration
     else:
         return False  # Session data exists and has not expired yet
+
+
+
+# Set Google API key 
+os.environ['GOOGLE_API_KEY'] = "AIzaSyCGUvqnzJyA9Cohpr8cCQPufB73MOfIZDg"
+genai.configure(api_key = os.environ['GOOGLE_API_KEY'])
+
+# Create the Model
+txt_model = genai.GenerativeModel('gemini-pro')
+vis_model = genai.GenerativeModel('gemini-pro-vision')
+
+# Image to Base 64 Converter
+def image_to_base64(image_path):
+    with open(image_path, 'rb') as img:
+        encoded_string = base64.b64encode(img.read())
+    return encoded_string.decode('utf-8')
+
+# Function that takes User Inputs and displays it on ChatUI
+def query_message(history,txt,img):
+    if not img:
+        history += [(txt,None)]
+        return history
+    base64 = image_to_base64(img)
+    data_url = f"data:image/jpeg;base64,{base64}"
+    history += [(f"{txt} ![]({data_url})", None)]
+    return history
+
+# Function that takes User Inputs, generates Response and displays on Chat UI
+def llm_response(history,text,img):
+    if not img:
+        response = txt_model.generate_content(text)
+        history += [(None,response.text)]
+        return history
+
+    else:
+        img = PIL.Image.open(img)
+        response = vis_model.generate_content([text,img])
+        history += [(None,response.text)]
+        return history
+
+# Interface Code
+def create_gradio_app():
+    with gr.Blocks() as app:
+        with gr.Row():
+            image_box = gr.Image(type="filepath")
+        
+            chatbot = gr.Chatbot(
+                scale = 2,
+                height=750
+            )
+        text_box = gr.Textbox(
+                placeholder="Enter text and press enter, or upload an image",
+                container=False,
+            )
+
+        btn = gr.Button("Submit")
+        clicked = btn.click(query_message,
+                            [chatbot,text_box,image_box],
+                            chatbot
+                            ).then(llm_response,
+                                    [chatbot,text_box,image_box],
+                                    chatbot
+                                    )
+    return gr_app # type: ignore
+
+# Route to access the Gradio app
+@app.route('/gradio_app')
+def gradio_app():
+    if 'user_id' in session:  # Check if user is logged in
+        gr_app = create_gradio_app()  # Create Gradio app interface
+        return gr_app.launch(share=True)  # Launch Gradio app and return interface
+    else:
+        return redirect('/login')  # Redirect to login page if not logged in
 
 
 
@@ -183,12 +262,34 @@ def streamlit_integration():
         user_id = session['user_id']
         
         # Construct URL with user_id as a query parameter
-        streamlit_url = f'http://localhost:8501/?user_id={user_id}' 
+        streamlit_url = f'http://localhost:8501/?user_id={user_id}'
+        # gradio_url = f'http://localhost:7860/?user_id={user_id}' 
         # Redirect the user to the Streamlit app
         return redirect(streamlit_url)
+        # return redirect(gradio_url)
     else:
         return redirect('/login')  # Redirect to login page if not logged in
     
+
+# # Streamlit App
+# import streamlit as st
+# # from flask import Flask,request,app
+
+# # Route for the Streamlit app
+# @app.route('/streamlit-app')
+# def streamlit_app():
+#     # Extract user_id from the query parameters
+#     user_id = request.args.get('user_id')
+    
+#     # Perform authentication check based on user_id
+#     if authenticate_user(user_id): # type: ignore
+#         # User is authenticated, proceed with Streamlit app
+#         st.write("Welcome to Streamlit app!")
+#     else:
+#         # User is not authenticated, deny access
+#         st.write("Access denied. Please log in.")
+
+
 @app.route('/logout')
 def logout():
     session.pop('email',None)
