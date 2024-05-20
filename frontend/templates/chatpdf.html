@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect to chatPDF</title>
+</head>
+<body>
+    <button onclick="redirectToExample()">Go to ChatPDF</button>
+
+    <script>
+        function redirectToExample() {
+            const userId = sessionStorage.getItem('user_id');
+            if (userId){
+                window.location.href = "http://localhost:8501/?user_id="+userId;
+            }
+
+            
+        }
+    </script>
+</body>
+</html>
