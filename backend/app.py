@@ -106,11 +106,8 @@ def index():
 @app.route('/register', methods=['POST'])
 def register():
     if request.method == 'POST':
-        # handle request
-        # print(request.get_data())
-        
+        # handle request        
         data=request.get_json()
-        # print(data)
         name = data['name']
         email = data['email']
         password = data['password']
@@ -140,7 +137,6 @@ def login():
         # email = request.form['email']
         # password = request.form['password']
         data=request.get_json()
-        # print(data)
         email = data['email']
         password = data['password']
 
@@ -198,19 +194,19 @@ def profile():
 
 
 
-# Route to access the Streamlit app
-@app.route('/streamlit')
-def streamlit_integration():
-    if 'user_id' in session:  # Check if user is logged in
-        # Pass user authentication information to Streamlit app
-        user_id = session['user_id']
-        # print(user_id)
-        # Construct URL with user_id as a query parameter
-        streamlit_url = f'http://localhost:8501/?user_id={user_id}' 
-        # Redirect the user to the Streamlit app
-        return redirect(streamlit_url)
-    else:
-        return jsonify({'message':'Please login'})  # Redirect to login page if not logged in
+# # Route to access the Streamlit app
+# @app.route('/streamlit')
+# def streamlit_integration():
+#     if 'user_id' in session:  # Check if user is logged in
+#         # Pass user authentication information to Streamlit app
+#         user_id = session['user_id']
+#         # print(user_id)
+#         # Construct URL with user_id as a query parameter
+#         streamlit_url = f'http://localhost:8501/?user_id={user_id}' 
+#         # Redirect the user to the Streamlit app
+#         return redirect(streamlit_url)
+#     else:
+#         return jsonify({'message':'Please login'})  # Redirect to login page if not logged in
   
 @app.route('/logout')
 def logout():
